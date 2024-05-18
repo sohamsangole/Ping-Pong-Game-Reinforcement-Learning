@@ -16,8 +16,8 @@ pygame.display.set_caption('PingPong')
 clock = pygame.time.Clock()
 running = True
 dt = 0
-player_pos1 = pygame.Vector2(1 * screen.get_width() / 16, screen.get_height() / 2)
-player_pos2 = pygame.Vector2(15 * screen.get_width() / 16, screen.get_height() / 2)
+player_pos1 = pygame.Vector2(1 * screen.get_width() / 16, screen.get_height() / 2- 40)
+player_pos2 = pygame.Vector2(15 * screen.get_width() / 16, screen.get_height() / 2 - 40)
 ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
 speed = [-750,0]
 font = pygame.font.Font(None, 74)
@@ -63,7 +63,7 @@ while running:
         if speed[0] < 0:  # Ensure the paddle hit is only processed once per collision
             speed[0] = -speed[0]
             offset = (ball.y - player_pos1.y) - 40  # 40 is half the paddle height
-            speed[1] = offset * 10  # Adjust reflection angle
+            speed[1] = offset * 25  # Adjust reflection angle
             paddle_hit_sound.play()
 
 
@@ -72,7 +72,7 @@ while running:
         if speed[0] > 0:  # Ensure the paddle hit is only processed once per collision
             speed[0] = -speed[0]
             offset = (ball.y - player_pos2.y) - 40  # 40 is half the paddle height
-            speed[1] = offset * 10  # Adjust reflection angle
+            speed[1] = offset * 25  # Adjust reflection angle
             paddle_hit_sound.play()
 
 
@@ -80,11 +80,15 @@ while running:
     if ball.x < player_pos1.x - 30:
         score2 += 1
         ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
+        player_pos1.y = screen.get_height() // 2 - 40
+        player_pos2.y = screen.get_height() // 2 - 40
         speed = [750, 0]
         
     if ball.x > player_pos2.x + 30:
         score1 += 1
         ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
+        player_pos1.y = screen.get_height() // 2 - 40
+        player_pos2.y = screen.get_height() // 2 - 40
         speed = [-750, 0]
 
     # Render the scores
