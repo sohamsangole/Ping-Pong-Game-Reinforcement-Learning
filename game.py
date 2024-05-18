@@ -1,14 +1,14 @@
 import pygame
-from pygame import mixer 
+from pygame import mixer
+
 mixer.init() 
 paddle_hit_sound = mixer.Sound("sound1.mp3")
 wall_hit_sound = mixer.Sound("sound2.mp3")
 background_music = mixer.music.load("A Lonely Cherry Tree.mp3")
-mixer.music.set_volume(0.4) 
+mixer.music.set_volume(0.0) # 0.4 
 mixer.music.play(-1) 
 score1 = 0
 score2 = 0
-ball_trail = []
 
 pygame.init()
 screen = pygame.display.set_mode((720, 720))
@@ -19,9 +19,8 @@ dt = 0
 player_pos1 = pygame.Vector2(1 * screen.get_width() / 16, screen.get_height() / 2- 40)
 player_pos2 = pygame.Vector2(15 * screen.get_width() / 16, screen.get_height() / 2 - 40)
 ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
-speed = [-750,0]
+speed = [-900,0]
 font = pygame.font.Font(None, 74)
-
 
 while running:
     for event in pygame.event.get():
@@ -37,26 +36,21 @@ while running:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_w]:
-        player_pos1.y -= 700 * dt
+        player_pos1.y -= 800 * dt
     if keys[pygame.K_s]:
-        player_pos1.y += 700 * dt
+        player_pos1.y += 800 * dt
 
-    if keys[pygame.K_UP]:
-        player_pos2.y -= 700 * dt
-    if keys[pygame.K_DOWN]:
-        player_pos2.y += 700 * dt
+    player_pos2.y = ball.y - 40
 
     player_pos1.y = max(0, min(player_pos1.y, screen.get_height() - 80))
     player_pos2.y = max(0, min(player_pos2.y, screen.get_height() - 80))
 
-    # ball.x += speed[0] * dt
-    # ball.y += speed[1] * dt
     ball += pygame.Vector2(speed[0] * dt, speed[1] * dt)
 
-    # Ball collision with screen edges
+
     if ball.y <= 0 or ball.y >= screen.get_height():
         speed[1] = -speed[1]
-        wall_hit_sound.play()
+        # wall_hit_sound.play()
 
     # Ball collision with player 1's paddle
     if (ball.x - 10 <= player_pos1.x + 20 and player_pos1.y <= ball.y <= player_pos1.y + 80):
@@ -64,8 +58,7 @@ while running:
             speed[0] = -speed[0]
             offset = (ball.y - player_pos1.y) - 40  # 40 is half the paddle height
             speed[1] = offset * 25  # Adjust reflection angle
-            paddle_hit_sound.play()
-
+            # paddle_hit_sound.play()
 
     # Ball collision with player 2's paddle
     if (ball.x + 10 >= player_pos2.x and player_pos2.y <= ball.y <= player_pos2.y + 80):
@@ -73,8 +66,6 @@ while running:
             speed[0] = -speed[0]
             offset = (ball.y - player_pos2.y) - 40  # 40 is half the paddle height
             speed[1] = offset * 25  # Adjust reflection angle
-            paddle_hit_sound.play()
-
 
     # Check for scoring
     if ball.x < player_pos1.x - 30:
@@ -82,14 +73,14 @@ while running:
         ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
         player_pos1.y = screen.get_height() // 2 - 40
         player_pos2.y = screen.get_height() // 2 - 40
-        speed = [750, 0]
+        speed = [900, 0]
         
     if ball.x > player_pos2.x + 30:
         score1 += 1
         ball = pygame.Vector2(1 * screen.get_width() / 2, screen.get_height() / 2)
         player_pos1.y = screen.get_height() // 2 - 40
         player_pos2.y = screen.get_height() // 2 - 40
-        speed = [-750, 0]
+        speed = [-900, 0]
 
     # Render the scores
     score_text = font.render(f"{score1} - {score2}", True, (0, 0, 0))
@@ -97,7 +88,6 @@ while running:
     screen.blit(score_text, text_rect)
 
     pygame.display.flip()
-
     clock.tick(60)
     dt = clock.tick(60) / 1000
 pygame.quit()
