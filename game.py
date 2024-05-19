@@ -1,3 +1,4 @@
+import random
 import pygame
 from pygame import mixer
 
@@ -40,7 +41,13 @@ while running:
     if keys[pygame.K_s]:
         player_pos1.y += 800 * dt
 
-    player_pos2.y = ball.y - 40
+    number = random.randint(1, 12)
+    if number <= 3:
+        player_pos2.y = ball.y - 20
+    elif number >= 4 and number < 8:
+        player_pos2.y = ball.y - 40
+    else:
+        player_pos2.y = ball.y - 60
 
     player_pos1.y = max(0, min(player_pos1.y, screen.get_height() - 80))
     player_pos2.y = max(0, min(player_pos2.y, screen.get_height() - 80))

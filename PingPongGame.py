@@ -1,4 +1,5 @@
 import pygame
+import random
 
 pygame.init()
 pygame.display.set_caption('PING - PONG')
@@ -10,20 +11,20 @@ class PingPong:
         self.h = h
         self.screen = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('PingPong')
-        self.clock = pygame.time.Clock()
         self.dt = 0
         self.player_pos1 = pygame.Vector2(1 * self.w / 16, self.h / 2 - 40)
         self.player_pos2 = pygame.Vector2(15 * self.w / 16, self.h / 2 - 40)
         self.ball = pygame.Vector2(1 * self.w / 2, self.h / 2)
         self.speed = [-900, 0]
-        self.font = pygame.font.Font(None, 74)
+        self.font = pygame.font.Font(None, 37)
         self.score1 = 0
         self.score2 = 0
         self.running = True
-        self.reward = -1
+        self.reward1_num = 0
+        self.reward2_num = 0
+        self.reward3_num = 0
 
     def reset(self):
-        self.reward = -1
         self.player_pos1 = pygame.Vector2(1 * self.w / 16, self.h / 2 - 40)
         self.player_pos2 = pygame.Vector2(15 * self.w / 16, self.h / 2 - 40)
         self.ball = pygame.Vector2(1 * self.w / 2, self.h / 2)
@@ -37,8 +38,17 @@ class PingPong:
         pygame.draw.line(self.screen, "black", (self.screen.get_width() // 2, 0),
                          (self.screen.get_width() // 2, self.screen.get_height()), 2)
         score_text = self.font.render(f"{self.score1} - {self.score2}", True, (0, 0, 0))
+        reward1_text = self.font.render(f"Distance Reward: {self.reward1_num:.2f}", True, (0, 0, 0))
+        reward2_text = self.font.render(f"Ball Hits Reward: {self.reward2_num:.2f}", True, (0, 0, 0))
+        reward3_text = self.font.render(f"Point Loses Penalty: {self.reward3_num:.2f}", True, (0, 0, 0))
         text_rect = score_text.get_rect(center=(self.screen.get_width() / 2, 50))
+        reward1_rect = reward1_text.get_rect(center=(7 * self.screen.get_width() / 9, 100))
+        reward2_rect = reward2_text.get_rect(center=(7 * self.screen.get_width() / 9, 150))
+        reward3_rect = reward3_text.get_rect(center=(7 * self.screen.get_width() / 9, 200))
         self.screen.blit(score_text, text_rect)
+        self.screen.blit(reward1_text, reward1_rect)
+        self.screen.blit(reward2_text, reward2_rect)
+        self.screen.blit(reward3_text, reward3_rect)
         pygame.display.flip()
 
     def move_players(self,action):
@@ -53,13 +63,22 @@ class PingPong:
         self.player_pos1.y = max(0, min(self.player_pos1.y, self.h - 80))
         self.player_pos2.y = max(0, min(self.player_pos2.y, self.h - 80))
 
+        # distance = abs(self.player_pos1.y + 40 - self.ball.y)
+
     def move_paddles(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             self.player_pos1.y -= 800 * self.dt
         if keys[pygame.K_s]:
             self.player_pos1.y += 800 * self.dt
-        self.player_pos2.y = self.ball.y - 40
+        
+        number = random.randint(1, 12)
+        if number <= 3:
+            self.player_pos2.y = self.ball.y - 20
+        elif number >= 4 and number < 8:
+            self.player_pos2.y = self.ball.y - 40
+        else:
+            self.player_pos2.y = self.ball.y - 60
         self.player_pos1.y = max(0, min(self.player_pos1.y, self.h - 80))
         self.player_pos2.y = max(0, min(self.player_pos2.y, self.h - 80))
 
@@ -75,7 +94,6 @@ class PingPong:
                 self.speed[0] = -self.speed[0]
                 offset = (self.ball.y - self.player_pos1.y) - 40
                 self.speed[1] = offset * 25
-                self.reward = 10
                 self.score1 += 1
         if (self.ball.x + 10 >= self.player_pos2.x and
                 self.player_pos2.y <= self.ball.y <= self.player_pos2.y + 80):
@@ -88,17 +106,14 @@ class PingPong:
 
     def check_scoring(self):
         if self.ball.x < self.player_pos1.x - 30:
-            self.score2 += 1
             self.reset()
             self.speed = [900, 0]
-            self.reward = -10
-            return True
+            return True, True
         if self.ball.x > self.player_pos2.x + 30:
             self.reset()
             self.speed = [-900, 0]
-            self.reward = 100
-            return True
-        return False
+            return True, False
+        return False, False
 
     def run_game(self):
         while self.running:
@@ -117,24 +132,45 @@ class PingPong:
         pygame.quit()
 
     def play(self, action):
+        clock = pygame.time.Clock()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
-        self.dt = self.clock.tick(60) / 1000
+        self.dt = clock.tick(60) / 1000
         self.move_players(action=action)
         self.move_ball()
+        distance = abs(self.player_pos1.y + 40 - self.ball.y)  # 40 is the paddle half-height
         self.handle_collisions()
-        game_over = self.check_scoring()
+        game_over, you_lose = self.check_scoring()
         self.draw()
-        reward = self.reward
         score = self.score1
+        reward = 0
+        reward1 = 10 * (320 - distance) / 320
+        reward2 = 0
+        reward3 = 0
+        # Ball Hits Paddle        
+        if (self.ball.x - 10 <= self.player_pos1.x + 20 and self.player_pos1.y <= self.ball.y <= self.player_pos1.y + 80):
+                reward2 = 10 
+        else:
+            reward2 = 0
+
+        if you_lose:
+            reward3 = -10
+        else:
+            reward3 = 0
+
         if game_over:
             self.reset_score()
+
+        reward = reward1 + reward2 + reward3
+        self.reward1_num = reward1
+        self.reward2_num = reward2
+        self.reward3_num = reward3
+        # print(self.reward_num)
         return reward, game_over, score
     
     def reset_score(self):
-        self.reward = -1
         self.score1 = 0
         self.score2 = 0
 

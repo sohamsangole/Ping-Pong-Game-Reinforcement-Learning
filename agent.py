@@ -5,9 +5,10 @@ from collections import deque
 from model import Linear_QNet, QTrainer
 from PingPongGame import PingPong
 
-MAX_MEMORY = 100_000
+MAX_MEMORY = 100000
 BATCH_SIZE = 1000
 LR = 0.001
+
 
 class Agent:
 
@@ -16,9 +17,8 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(4, 256, 256, 3)
+        self.model = Linear_QNet(4,10,50,10,3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.epsilon = 1  # Initial exploration rate
         self.epsilon_decay = 0.995  # Decay rate for exploration
         self.min_epsilon = 0.01  # Minimum exploration rate
 
@@ -51,12 +51,16 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        if np.random.rand() < self.epsilon:
-            return np.random.choice([0, 1, 2], p=[1/3, 1/3, 1/3])  # Random action
+        self.epsilon = max(0.01, (100 - self.n_games)/100)
+        if random.random() < self.epsilon:
+            move = random.randint(0, 2) 
         else:
-            state_tensor = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state_tensor)
-            return torch.argmax(prediction).item()
+            # print("Prediction")
+            state0 = torch.tensor(state, dtype=torch.float)  # Convert state to a tensor
+            prediction = self.model.forward(state0)  # Get model prediction
+            move = torch.argmax(prediction).item()  # Choose the action with the highest predicted value
+        return move
+
 
 def train():
     record = 0
@@ -69,7 +73,13 @@ def train():
         state_new = agent.get_state(game)
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
         agent.remember(state_old, final_move, reward, state_new, done)
-
+        # print("State Old : ",state_old)
+        # print("Final Move : ",final_move)
+        # print("Reward : ",reward)
+        # print("State New : ",state_new)
+        # print("Done : ",done)
+        # print("*"*10)
+        # print(state_old, final_move, reward, state_new, done)
         if done:
             game.reset()
             agent.n_games += 1
@@ -78,6 +88,7 @@ def train():
             if score > record:
                 record = score
                 agent.model.save()
+
             print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
 

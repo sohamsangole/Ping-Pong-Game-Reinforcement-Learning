@@ -5,16 +5,18 @@ import torch.nn.functional as F
 import os
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size1,hidden_size2, output_size):
+    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size1)
         self.linear2 = nn.Linear(hidden_size1, hidden_size2)
-        self.linear3 = nn.Linear(hidden_size2, output_size)
+        self.linear3 = nn.Linear(hidden_size2, hidden_size3)
+        self.linear4 = nn.Linear(hidden_size3, output_size)
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
-        x = self.linear3(x)
+        x = F.relu(self.linear3(x))
+        x = self.linear4(x)
         return x
 
     def save(self, file_name='model.pth'):
@@ -42,27 +44,23 @@ class QTrainer:
         # (n, x)
 
         if len(state.shape) == 1:
-            # (1, x)
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
             done = (done, )
-
-        # 1: predicted Q values with current state
         pred = self.model(state)
-
         target = pred.clone()
+        # print("Target Before : " , target)
         for idx in range(len(done)):
+            # print(action[idx].item())
             Q_new = reward[idx]
             if not done[idx]:
                 Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
-
-            target[idx][torch.argmax(action[idx]).item()] = Q_new
+            target[idx][action[idx]] = Q_new
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
         loss.backward()
-
         self.optimizer.step()
 
 
