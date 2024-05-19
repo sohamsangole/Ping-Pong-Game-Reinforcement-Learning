@@ -59,7 +59,17 @@ class PingPong:
         elif action == 2:
             pass
         
-        self.player_pos2.y = self.ball.y - 40
+        number = random.randint(1, 1000)
+        if number <= 300:
+            self.player_pos2.y = self.ball.y - 20
+        elif number >= 300 and number < 600:
+            self.player_pos2.y = self.ball.y - 40
+        elif number >= 600 and number <= 900:
+            self.player_pos2.y = self.ball.y - 60
+        else:
+            self.player_pos2.y = self.ball.y - 100
+
+
         self.player_pos1.y = max(0, min(self.player_pos1.y, self.h - 80))
         self.player_pos2.y = max(0, min(self.player_pos2.y, self.h - 80))
 
@@ -72,13 +82,6 @@ class PingPong:
         if keys[pygame.K_s]:
             self.player_pos1.y += 800 * self.dt
         
-        number = random.randint(1, 12)
-        if number <= 3:
-            self.player_pos2.y = self.ball.y - 20
-        elif number >= 4 and number < 8:
-            self.player_pos2.y = self.ball.y - 40
-        else:
-            self.player_pos2.y = self.ball.y - 60
         self.player_pos1.y = max(0, min(self.player_pos1.y, self.h - 80))
         self.player_pos2.y = max(0, min(self.player_pos2.y, self.h - 80))
 
@@ -146,19 +149,22 @@ class PingPong:
         self.draw()
         score = self.score1
         reward = 0
-        reward1 = 10 * (320 - distance) / 320
+        reward1 = 4 * (40 - distance) / 40
         reward2 = 0
         reward3 = 0
         # Ball Hits Paddle        
         if (self.ball.x - 10 <= self.player_pos1.x + 20 and self.player_pos1.y <= self.ball.y <= self.player_pos1.y + 80):
-                reward2 = 10 
+                reward2 = 20 
         else:
             reward2 = 0
 
         if you_lose:
-            reward3 = -10
+            reward3 = -20
         else:
-            reward3 = 0
+            if self.ball.x > self.player_pos2.x + 30:
+                reward3 = 100
+            else: 
+                reward3 = 0
 
         if game_over:
             self.reset_score()

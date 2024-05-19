@@ -17,7 +17,7 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(4,10,50,10,3)
+        self.model = Linear_QNet(4,128,256,128,3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.epsilon_decay = 0.995  # Decay rate for exploration
         self.min_epsilon = 0.01  # Minimum exploration rate
